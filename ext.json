@@ -1,0 +1,13 @@
+{
+  "identifier": "com.devlorenzo.my-sn-markdown-reborn",
+  "name": "Markdown Reborn",
+  "content_type": "SN|Component",
+  "spellcheckControl": true,
+  "note_type": "markdown",
+  "file_type": "md",
+  "showInGallery": true,
+  "area": "editor-editor",
+  "version": "1.0.0",
+  "description": "A fully featured Markdown editor that supports live edit preview.",
+  "url": "http://localhost:3000/index.html"
+}
