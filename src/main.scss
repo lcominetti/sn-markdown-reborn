@@ -212,7 +212,7 @@ html {
     opacity: 0.8;
 }
 
-/* List markers (your existing rules) */
+/* List markers */
 .CodeMirror .CodeMirror-line > span > span.cm-variable-2:first-child {
     opacity: 0.5;
 }
@@ -222,4 +222,64 @@ html {
 .CodeMirror .cm-active-line span.cm-variable-2:first-child,
 .CodeMirror .cm-active-line span.cm-meta:nth-child(2) {
     opacity: 1;
+}
+
+/* Checkbox styling */
+.CodeMirror .cm-checkbox-widget {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(127, 127, 127, 0.5);
+    border-radius: 4px;
+    background: transparent;
+    cursor: pointer;
+    vertical-align: middle;
+    position: relative;
+    top: -1px;
+    transition:
+        border-color 0.15s ease,
+        background 0.15s ease;
+    flex-shrink: 0;
+}
+
+.CodeMirror .cm-checkbox-widget:hover {
+    border-color: rgba(127, 127, 127, 0.9);
+}
+
+/* Checked state using theme fill */
+.CodeMirror .cm-checkbox-widget:checked {
+    background: var(--sn-stylekit-info-color);
+    border-color: var(--sn-stylekit-info-color);
+}
+
+/* Checkmark via ::after */
+.CodeMirror .cm-checkbox-widget:checked::after {
+    content: "";
+    display: block;
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 5px;
+    height: 9px;
+    border: 2px solid white;
+    border-top: none;
+    border-left: none;
+    transform: rotate(45deg);
+}
+
+/* Hide the "- " dash on checkbox lines entirely */
+.CodeMirror
+    .cm-checkbox-line
+    .CodeMirror-line
+    > span
+    > span.cm-variable-2:first-child {
+    opacity: 0;
+    font-size: 0;
+}
+
+/* Strike through and dim text on checked lines */
+.CodeMirror .cm-checkbox-checked .cm-variable-2:last-child {
+    opacity: 0.4;
+    text-decoration: line-through;
 }

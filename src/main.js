@@ -72,72 +72,141 @@ document.addEventListener("DOMContentLoaded", function (event) {
     syntaxMarks.forEach((m) => m.clear());
     syntaxMarks = [];
 
-    // Remove HR line classes from all lines
     const doc = editor.getDoc();
     const lineCount = doc.lineCount();
+
     for (let i = 0; i < lineCount; i++) {
       editor.removeLineClass(i, "wrap", "cm-hr-line");
+      editor.removeLineClass(i, "wrap", "cm-checkbox-line");
+      editor.removeLineClass(i, "wrap", "cm-checkbox-checked");
     }
 
     for (let i = 0; i < lineCount; i++) {
       const lineText = doc.getLine(i);
 
-      // Headers: mark the leading "### " prefix
-      const headerMatch = lineText.match(/^(#{1,6} )/);
-      if (headerMatch) {
-        syntaxMarks.push(
-          doc.markText(
-            { line: i, ch: 0 },
-            { line: i, ch: headerMatch[1].length },
-            { className: "cm-syntax-hidden cm-header-syntax" },
-          ),
-        );
-        continue;
-      }
+      if (applyHeaderMarks(doc, i, lineText)) continue;
+      if (applyHorizontalRuleMarks(i, lineText)) continue;
 
-      // Horizontal rule: add class to the line wrapper for CSS ::after trick
-      if (/^-{3,}$/.test(lineText.trim())) {
-        editor.addLineClass(i, "wrap", "cm-hr-line");
-        continue;
-      }
-
-      // Links: [label](url) — replace whole thing with a clickable widget
-      const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-      let linkMatch;
-      while ((linkMatch = linkRegex.exec(lineText)) !== null) {
-        const label = linkMatch[1];
-        const url = linkMatch[2];
-        const from = { line: i, ch: linkMatch.index };
-        const to = { line: i, ch: linkMatch.index + linkMatch[0].length };
-
-        const anchor = document.createElement("a");
-        anchor.textContent = label;
-        anchor.href = url;
-        anchor.className = "cm-link-widget";
-        anchor.setAttribute("target", "_blank");
-        anchor.setAttribute("rel", "noopener noreferrer");
-        anchor.addEventListener("click", (e) => {
-          e.preventDefault();
-          window.open(url, "_blank", "noopener,noreferrer");
-        });
-
-        syntaxMarks.push(
-          doc.markText(from, to, {
-            replacedWith: anchor,
-            handleMouseEvents: true,
-          }),
-        );
-      }
-
-      // Bold: mark each ** delimiter
-      markDelimiters(doc, i, lineText, /\*\*/g, 2, "cm-syntax-hidden");
-
-      // Italic: mark single * not part of **
-      markItalicDelimiters(doc, i, lineText);
-
-      // Inline code: mark each ` backtick
-      markDelimiters(doc, i, lineText, /`/g, 1, "cm-syntax-hidden");
+      applyCheckboxMarks(doc, i, lineText);
+      applyLinkMarks(doc, i, lineText);
+      applyBoldMarks(doc, i, lineText);
+      applyItalicMarks(doc, i, lineText);
+      applyInlineCodeMarks(doc, i, lineText);
     }
+  }
+
+  function applyHeaderMarks(doc, i, lineText) {
+    const headerMatch = lineText.match(/^(#{1,6} )/);
+    if (!headerMatch) return false;
+
+    syntaxMarks.push(
+      doc.markText(
+        { line: i, ch: 0 },
+        { line: i, ch: headerMatch[1].length },
+        { className: "cm-syntax-hidden cm-header-syntax" },
+      ),
+    );
+    return true;
+  }
+
+  function applyHorizontalRuleMarks(i, lineText) {
+    if (!/^-{3,}$/.test(lineText.trim())) return false;
+
+    editor.addLineClass(i, "wrap", "cm-hr-line");
+    return true;
+  }
+
+  function applyCheckboxMarks(doc, i, lineText) {
+    const checkboxRegex = /\[([ x])\]/gi;
+    let checkboxMatch;
+
+    while ((checkboxMatch = checkboxRegex.exec(lineText)) !== null) {
+      const checked = checkboxMatch[1].toLowerCase() === "x";
+      const matchIndex = checkboxMatch.index;
+      const from = { line: i, ch: matchIndex };
+      const to = { line: i, ch: matchIndex + 3 };
+      const lineIndex = i;
+
+      editor.addLineClass(i, "wrap", "cm-checkbox-line");
+      if (checked) {
+        editor.addLineClass(i, "wrap", "cm-checkbox-checked");
+      }
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.checked = checked;
+      checkbox.className = "cm-checkbox-widget";
+
+      checkbox.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+
+      checkbox.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const currentText = doc.getLine(lineIndex);
+        const toggled =
+          currentText.slice(0, matchIndex) +
+          (!checked ? "[x]" : "[ ]") +
+          currentText.slice(matchIndex + 3);
+        doc.replaceRange(
+          toggled,
+          { line: lineIndex, ch: 0 },
+          { line: lineIndex, ch: currentText.length },
+        );
+        saveNote();
+      });
+
+      syntaxMarks.push(
+        doc.markText(from, to, {
+          replacedWith: checkbox,
+          handleMouseEvents: true,
+        }),
+      );
+    }
+  }
+
+  function applyLinkMarks(doc, i, lineText) {
+    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+    let linkMatch;
+
+    while ((linkMatch = linkRegex.exec(lineText)) !== null) {
+      const label = linkMatch[1];
+      const url = linkMatch[2];
+      const from = { line: i, ch: linkMatch.index };
+      const to = { line: i, ch: linkMatch.index + linkMatch[0].length };
+
+      const anchor = document.createElement("a");
+      anchor.textContent = label;
+      anchor.href = url;
+      anchor.className = "cm-link-widget";
+      anchor.setAttribute("target", "_blank");
+      anchor.setAttribute("rel", "noopener noreferrer");
+      anchor.addEventListener("click", (e) => {
+        e.preventDefault();
+        window.open(url, "_blank", "noopener,noreferrer");
+      });
+
+      syntaxMarks.push(
+        doc.markText(from, to, {
+          replacedWith: anchor,
+          handleMouseEvents: true,
+        }),
+      );
+    }
+  }
+
+  function applyBoldMarks(doc, i, lineText) {
+    markDelimiters(doc, i, lineText, /\*\*/g, 2, "cm-syntax-hidden");
+  }
+
+  function applyItalicMarks(doc, i, lineText) {
+    markItalicDelimiters(doc, i, lineText);
+  }
+
+  function applyInlineCodeMarks(doc, i, lineText) {
+    markDelimiters(doc, i, lineText, /`/g, 1, "cm-syntax-hidden");
   }
 
   function markDelimiters(doc, line, text, regex, len, className) {
