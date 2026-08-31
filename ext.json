@@ -9,5 +9,8 @@
   "area": "editor-editor",
   "version": "1.0.0",
   "description": "A fully featured Markdown editor that supports live edit preview.",
-  "url": "https://lcominetti.github.io/sn-markdown-reborn/index.html"
+  "url": "http://localhost:8000/",
+  "download_url": "http://localhost:8000/",
+  "latest_url": "http://localhost:8000/ext.json",
+  "marketing_url": "http://localhost:8000/"
 }
